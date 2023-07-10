@@ -3,6 +3,8 @@
 namespace App\Http\Controllers;
 
 use App\Models\proyecto;
+use App\Models\User;
+use App\Models\estados;
 use Illuminate\Http\Request;
 use App\Http\Resources\ProyectoResource;
 use Validator;
@@ -15,7 +17,8 @@ class proyectoController extends Controller
      */
     public function index()
     {
-            return $this->sendResponse(new ProyectoResource::collection(proyecto::where('estado_id','<>',4)->get()));
+        $proyectos=ProyectoResource::collection(proyecto::where('estados_id','<>',4)->get());
+            return $this->sendResponse($proyectos,'Consultado');;
     }
 
     /**
@@ -28,11 +31,19 @@ class proyectoController extends Controller
             'DESCRIPCION' => 'required',
             'INICIO' => 'required|date',
             'FIN' => 'required|date|after:INICIO',
+            'USUARIO'=>'required'
         ]);
 
         if($validator->fails()){
             return $this->sendError('Error con los datos enviados', $validator->errors());       
         }
+
+        $validarusuario=User::where('usuario',$request->USUARIO)->where('estado',1)->first();
+
+        if(!$validarusuario){
+            return $this->sendError('usuario invalido o inactivo', $validator->errors()); 
+        }
+
 
         try{
         $proyecto=proyecto::create(
@@ -41,7 +52,8 @@ class proyectoController extends Controller
                 'descripcion'=>$request->DESCRIPCION,
                 'fecha_inicio'=>$request->INICIO,
                 'fecha_fin'=>$request->FIN,
-                'estado'=>1
+                'estados_id'=>1,
+                'user_id'=>$validarusuario->id
             ]);
 
         return $this->sendResponse(new ProyectoResource($proyecto), 'Nuevo proyecto registrado');
@@ -55,7 +67,8 @@ class proyectoController extends Controller
      */
     public function show(proyecto $proyecto)
     {
-        return $this->sendResponse(new ProyectoResource::collection($proyecto));
+
+        return $this->sendResponse(new ProyectoResource($proyecto),'Consultado');
     }
 
     /**
@@ -75,11 +88,19 @@ class proyectoController extends Controller
         if($validator->fails()){
             return $this->sendError('Error con los datos enviados', $validator->errors());       
         }
+
+        $validarestado=estados::find($request->ESTADO);
+
+        if(!$validarestado){
+            return $this->sendError('Estado Invalido', $validator->errors()); 
+        }
+
         try{
         $proyecto->titulo=$request->TITULO;
         $proyecto->descripcion=$request->DESCRIPCION;
         $proyecto->fecha_inicio=$request->INICIO;
         $proyecto->fecha_fin=$request->FIN;
+        $proyecto->estados_id=$request->ESTADO;
         $proyecto->save();
         return $this->sendResponse(new ProyectoResource($proyecto), 'Actualizacion exitosa');
         }catch(\Exception $e){
@@ -92,6 +113,9 @@ class proyectoController extends Controller
      */
     public function destroy(proyecto $proyecto)
     {
-        $proyecto->destroy();
+
+        $proyecto->estados_id=4;
+        $proyecto->save();
+        return $this->sendResponse('', 'Registro eliminado con exito');
     }
 }

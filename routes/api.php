@@ -3,6 +3,8 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\UserController;  
+use App\Http\Controllers\proyectoController;  
+use App\Http\Controllers\tareasController;  
 /*
 |--------------------------------------------------------------------------
 | API Routes
@@ -27,8 +29,20 @@ Route::middleware('auth:sanctum')->group(function(){
     Route::controller(proyectoController::class)->group(function(){
         Route::get('proyectos','index');
         Route::post('proyectos','store');
-        Route::get('proyectos/{id}','show');
-        Route::get('proyectos','index');
+        Route::get('proyectos/{proyecto}','show');
+        Route::put('proyectos/{proyecto}','update');
+        Route::delete('proyectos/{proyecto}','destroy');
+
+    });
+
+    Route::controller(tareasController::class)->group(function(){
+        Route::get('tareas','index');
+        Route::post('tareas','store');
+        Route::get('tareas/{tarea}','show');
+        Route::put('tareas/{tarea}','update');
+        Route::delete('tareas/{tarea}','destroy');
+        Route::post('tareas/asignar','Asignartouser');
+        Route::post('tareas/desasignar','desasignartouser');
 
     });
 });
